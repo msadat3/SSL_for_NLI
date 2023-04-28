@@ -103,7 +103,7 @@ def train_model(location, model_type, X_train, att_mask_train, y_train, X_valid,
                 print("Validation f1 score did not improve from", prev_best_score)
                 notImprovingEpoch += 1
 
-def test_model(location, model_type, x, att_x, y, device, batch_size, num_classes):
+def test_model(location, model_type, x, att_x, y, device, batch_size, num_classes, save_loc):
     if model_type == "Sci_BERT":
         test_model = Sci_BERT(num_classes)
     elif model_type == "RoBERTa":
@@ -129,21 +129,21 @@ def test_model(location, model_type, x, att_x, y, device, batch_size, num_classe
     with torch.no_grad():
         test_out = []
         #all_probabilities = []
-        #all_max_probabilities = []
+        all_max_probabilities = []
         for test_data, test_target, att in testLoader:
             test_data = test_data.to(torch.device(device))
             test_target = test_target.to(torch.device(device))
             att = att.to(torch.device(device))
 
             out = test_model(test_data, att)
-            #probabilities = torch.softmax(out, dim=1)
+            probabilities = torch.softmax(out, dim=1)
             out = torch.argmax(out, dim=1)
             out = out.cpu().detach().numpy()
             test_out += out.tolist()
-            #probabilities = probabilities.cpu().detach().numpy().tolist()
-            #max_probabilities = [max(p) for p in probabilities]
+            probabilities = probabilities.cpu().detach().numpy().tolist()
+            max_probabilities = [max(p) for p in probabilities]
 
-            #all_max_probabilities+=max_probabilities
+            all_max_probabilities+=max_probabilities
             #all_probabilities+=probabilities
 
         #save_data(test_out,location+'test_output.pkl')
@@ -154,6 +154,16 @@ def test_model(location, model_type, x, att_x, y, device, batch_size, num_classe
         print('Macro f1', current_score)
         print('Accuracy', Accuracy)
 
-        print(classification_report(y.tolist(), test_out, target_names=['entailment', 'neutral', 'contradiction'], digits=4))
-        
+        #print(classification_report(y.tolist(), test_out, target_names=['entailment', 'neutral', 'contradiction'], digits=4))
+        if num_classes == 2:
+            performance = classification_report(y.tolist(), test_out, target_names=['entailment', 'not_entailment'], digits=4, output_dict=True)
+        else:
+            performance = classification_report(y.tolist(), test_out, target_names=['entailment', 'neutral', 'contradiction'], digits=4, output_dict=True)
+        performance_df = pandas.DataFrame(performance).transpose()
+        performance_df.to_csv(save_loc)
+
+        return test_out, all_max_probabilities, current_score
+
+
+
 
