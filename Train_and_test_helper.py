@@ -16,7 +16,7 @@ from torch.utils.data.sampler import Sampler
 import math
 
 
-def train_model(location, model_type, X_train, att_mask_train, y_train, X_valid, att_mask_valid, y_valid, device, batch_size,accumulation_steps,num_epochs,num_classes,report_every, epoch_patience):
+def train_model(location, model_type, X_train, att_mask_train, y_train, X_valid, att_mask_valid, y_valid, device, batch_size,accumulation_steps,num_epochs,num_classes,report_every, epoch_patience, load=False):
     x_tr = torch.tensor(X_train, dtype=torch.long)
     att_mask_tr = torch.tensor(att_mask_train, dtype=torch.long)
     y_tr = torch.tensor(y_train, dtype=torch.long)
@@ -42,6 +42,9 @@ def train_model(location, model_type, X_train, att_mask_train, y_train, X_valid,
     if device != 'cpu':
         model.to(torch.device(device))
     
+    if load == True:
+        model.load_state_dict(torch.load(location + '/model.pt'))
+
     optimizer = optim.Adam(model.parameters(), lr=2e-5)
     criterion = nn.CrossEntropyLoss()
 
