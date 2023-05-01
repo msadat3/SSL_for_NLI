@@ -6,8 +6,6 @@
 
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
 import pandas
 from Train_and_test_helper import *
 from Data_preparation_helper import create_data_for_pretrained_lms
