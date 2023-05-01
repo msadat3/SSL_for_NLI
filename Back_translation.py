@@ -6,7 +6,6 @@
 #For adding noise by data augmentation: python Back_translation.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/' --input_file_name 'synthetic.tsv' --output_file_name 'syntheticAndAugmented.tsv' --combine_as_columns 'yes' --device 'cuda'
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import torch
 import pandas
 from transformers import MarianMTModel, MarianTokenizer
