@@ -58,15 +58,58 @@ Example command:
 ```
 python GenerateHypos.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/' --label 'entailment' --checkpoint_save_directory 'checkpoints' --model_type 'BART_large' --input_file_name  'unlabeled_premises.txt' --device 'cuda'
 ```
+This step will create a file named 'synthetic.tsv' in the sub-directories of each NLI class.
 
 #### Step 6:
-Finally, use the script named "Combine_class_wise_synthetic_data.py" to combine the synthetic data generated for each class to combine into one file. 
+Use the script named "Combine_class_wise_synthetic_data.py" to combine the synthetic data generated for each class to combine into one file. 
 
 Example command:
 ```
 python Combine_class_wise_synthetic_data.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/'
 ```
+This command will combine the class-wise 'synthetic.tsv' files and save the data in the base directory in a file with the same name i.e., 'synthetic.tsv'
+
+#### Step 7:
+Finally, use the script named "Back_translation.py" to augment the premise-hypothesis pairs using backtranslation.
+
+Example command:
+```
+python Back_translation.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/' --input_file_name 'synthetic.tsv' --output_file_name 'syntheticAndAugmented.tsv' --combine_as_columns 'yes' --device 'cuda'
+```
+This command will create a file named 'syntheticAndAugmented.tsv' that contains both the original and augmented versions of the premises and hypotheses in separate columns.
+
+### Self-training
+
+#### Step 1:
+For running any of the self-training approaches (VST, VST+N, DBST, DBST+N), create a base directory containing the train, test and dev files in TSV format. Next, create a sub-directory named 'iteration_0' containing the file named 'syntheticAndAugmented.tsv'.
+
+#### Step 2:
+Run commands as follows to experiment with different self-training approaches.
+
+=> VST
+```
+python Vanilla_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Vanilla_ST/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'no' --dataset 'MNLI'
+```
+
+=> VST+N
+```
+python Vanilla_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Vanilla_ST_noisy/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'yes' --dataset 'MNLI'
+```
+
+=> DBST
+```
+python Debiased_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Debiased_ST/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'no' --dataset 'MNLI'
+```
+
+=> VST+N
+```
+python Debiased_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Debiased_ST_noisy/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'yes' --dataset 'MNLI'
+```
+
+#### Step 3:
+When the self-training iterations stop, check the file named 'best_performing_model.txt' in the base directory for the best performing iteration information. 
 
 
-
+## Contact
+Feel free to reach out to us at msadat3@uic.edu, cornelia@uic.edu, sadat.mobashir@gmail.com with any questions.
 
