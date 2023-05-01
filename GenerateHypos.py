@@ -2,7 +2,6 @@
 #Example command: python GenerateHypos.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/' --label 'entailment' --checkpoint_save_directory 'checkpoints' --model_type 'BART_large' --input_file_name  'unlabeled_premises.txt' --device 'cuda'
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 from Utils import *
 import torch.nn as nn
 import torch
