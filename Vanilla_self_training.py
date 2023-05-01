@@ -5,8 +5,6 @@
 #VST+N: python Vanilla_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Vanilla_ST_noisy/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'yes' --dataset 'MNLI'
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
 import pandas
 from Train_and_test_helper import *
 from Data_preparation_helper import create_data_for_pretrained_lms
