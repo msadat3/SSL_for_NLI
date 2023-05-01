@@ -1,3 +1,6 @@
+# This script encodes and prepares the data to train generative model to generate hypothesis given a premise for a particular class.
+# Example command: python Prepare_data_for_generative_model.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/' --label 'entailment'
+
 from Utils import *
 import os.path as p
 import os
@@ -14,7 +17,7 @@ args = parser.parse_args()
 
 label = args.label
 
-base = args.base + label
+base = args.base + label + '/'
 
 traininingSet_location = base+'train.tsv'
 test_set_location = base+'test.tsv'
@@ -112,7 +115,7 @@ def prepare_all_data(output_location, premise_max_length, hypothesis_max_length)
     save_data(X_train_premise, output_location + 'X_train_premise.pkl')
     save_data(X_train_hypothesis, output_location + 'X_train_hypothesis.pkl')
 
-    save_data(X_test_premise output_location + 'X_test_premise.pkl')
+    save_data(X_test_premise, output_location + 'X_test_premise.pkl')
     save_data(X_test_hypothesis, output_location + 'X_test_hypothesis.pkl')
 
     save_data(X_valid_premise, output_location + 'X_valid_premise.pkl')

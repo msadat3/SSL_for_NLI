@@ -1,5 +1,7 @@
+#This script trains the hypothesis generation models for different classes.
+#Example command: python TrainGenerativeModel.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/' --label 'entailment' --model_type 'BART_large' --checkpoint_save_directory 'checkpoints' --device 'cuda'
+
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 from Utils import *
 import torch.nn as nn
 import torch
@@ -20,7 +22,7 @@ def create_data_loaders(X, X_att_mask, y, y_att_mask, batch_size, data_split='tr
     y = torch.tensor(y, dtype=torch.long)
     y_att_mask = torch.tensor(y_att_mask, dtype=torch.long)
 
-    print(X.shape, y.shape)
+    #print(X.shape, y.shape)
     data = TensorDataset(X, X_att_mask, y, y_att_mask)
     if data_split != 'train':
         data_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
@@ -115,7 +117,7 @@ def train_model(train_data_loader, validation_data_loader, model_type, learning_
                             last_checkpoint_info['i'] = 0
 
                         if validation_perplexity < prev_validation_perplexity:
-                            print(epoch," Validation perplexity improved from ", prev_validation_perplexity, " to ",
+                            print("Epoch", epoch," Validation perplexity improved from ", prev_validation_perplexity, " to ",
                                   validation_perplexity)
                             prev_validation_perplexity = validation_perplexity
                             not_improving_checkpoints = 0
@@ -128,7 +130,7 @@ def train_model(train_data_loader, validation_data_loader, model_type, learning_
                             best_checkpoint_info = last_checkpoint_info
                             save_data(best_checkpoint_info, best_checkpoint_info_location)
                         else:
-                            print("Validation perplexity did not improve.")
+                            print("Epoch", epoch," Validation perplexity did not improve.")
                             not_improving_checkpoints += 1
                             last_checkpoint_info['not_improving_checkpoints'] = not_improving_checkpoints
                             torch.save(model.state_dict(), last_checkpoint_location)
@@ -146,10 +148,10 @@ def train_model(train_data_loader, validation_data_loader, model_type, learning_
 
 parser = argparse.ArgumentParser(description='Train hypothesis generation models.')
 
-parser.add_argument("--base", type=str, help="Location of the directory containing the prepared data for all three classes.")
+parser.add_argument("--base", type=str, help="Location of the directory containing the data for all three classes.")
 parser.add_argument("--label", type=str, help="Class label to train the generative model for.")
 parser.add_argument("--checkpoint_save_directory", type=str, help="Name of the directory you want to save the model for.")
-parser.add_argument("--model_type", type=str, help="Type of the model you want to train and test: BART_large")
+parser.add_argument("--model_type", type=str, default='BART_large', help="Type of the model you want to train and test: BART_large")
 parser.add_argument("--batch_size", type=int, default=8)
 parser.add_argument("--gradient_accumulation_steps", type=int, default=8, help="Gradient accumulation steps.")
 parser.add_argument("--learning_rate", type=float, default=3e-5)
@@ -167,9 +169,9 @@ label = args.label
 # base = '/home/msadat3/NLI/MNLI/Class_wise_BART_3K_unfiltered/'+label+'/' + model_type + "/" 
 # #base = '/home/msadat3/NLI/MNLI/Class_wise_BART_6K/' + model_type + "/" 
 
-base = args.base + args.label+'/'
+base = args.base + label + '/' + model_type + '/'
 
-checkpoint_location = base + args.checkpoint_save_directory
+checkpoint_location = base + args.checkpoint_save_directory+'/'
 
 if p.exists(checkpoint_location) == False:
     os.mkdir(checkpoint_location)
@@ -180,7 +182,7 @@ batch_size = args.batch_size
 accumulation_steps = args.gradient_accumulation_steps
 learning_rate = args.learning_rate
 num_epochs = args.num_epochs
-report_every = args.report_evey
+report_every = args.report_every
 device = args.device
 
 
@@ -190,7 +192,7 @@ train_premise = load_data(base + 'X_train_premise.pkl')
 train_premise_att = load_data(base + 'att_mask_train_premise.pkl')
 train_hypothesis = load_data(base + 'X_train_hypothesis.pkl')
 train_hypothesis_att = load_data(base + 'att_mask_train_hypothesis.pkl')
-trainDataloader = create_data_loaders(train_premise, train_premise_att, train_hypothesis, train_hypothesis_att, batch_size, data_type='train')
+trainDataloader = create_data_loaders(train_premise, train_premise_att, train_hypothesis, train_hypothesis_att, batch_size, data_split='train')
 torch.save(trainDataloader, base+"/trainDataloader")
                                     
 
@@ -199,7 +201,7 @@ valid_premise = load_data(base + 'X_valid_premise.pkl')
 valid_premise_att = load_data(base + 'att_mask_valid_premise.pkl')
 valid_hypothesis = load_data(base + 'X_valid_hypothesis.pkl')
 valid_hypothesis_att = load_data(base + 'att_mask_valid_hypothesis.pkl')
-validDataloader = create_data_loaders(valid_premise, valid_premise_att, valid_hypothesis, valid_hypothesis_att, batch_size, data_type='valid')
+validDataloader = create_data_loaders(valid_premise, valid_premise_att, valid_hypothesis, valid_hypothesis_att, batch_size, data_split='valid')
 torch.save(validDataloader, base+"/validDataloader")
     
 

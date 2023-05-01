@@ -1,5 +1,12 @@
+#This script runs the debiased self-training approaches: DBST, DBST+N
+
+#Example command:
+#DBST: python Debiased_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Debiased_ST/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'no' --dataset 'MNLI'
+#DBST+N: python Debiased_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Debiased_ST_noisy/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'yes' --dataset 'MNLI'
+
+
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 import pandas
 from Train_and_test_helper import *
@@ -15,7 +22,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Debiased self-training: DBST and DBST+N.')
 
 parser.add_argument("--base", type=str, help="Location of a directory containing the train, test and dev files and a sub-directory named 'iteration_0' containing the synthetic set.")
-parser.add_argument("--model_type", type=str, help="Type of the model you want to train and test: BERT, Sci_BERT, RoBERTa or XLNet")
+parser.add_argument("--model_type", type=str, default='BERT', help="Type of the model you want to train and test: BERT, Sci_BERT, RoBERTa or XLNet")
 parser.add_argument("--batch_size", type=int)
 parser.add_argument("--num_epochs", type=int, default=10, help="Number of epochs to train the model for.")
 parser.add_argument("--epoch_patience", type=int, default=2, help="Patience for early stopping at epoch level.")
@@ -23,8 +30,8 @@ parser.add_argument("--iteration_patience", type=int, default=10, help="Patience
 parser.add_argument("--report_every", type=int, default=-1, help="Step interval to report loss. By default loss will be reported only at the end of an epoch.")
 parser.add_argument("--device", type=str, default='cpu')
 parser.add_argument("--random_seed", type=int, default=1234)
-parser.add_argument("--noisy", type=bool, default=False, help="Whethter to inject noise by using data augmentation.")
-parser.add_argument("--ensure_label_consistency", type=bool, default=True, help="Whethter to ensure label consistency as an additional filter.")
+parser.add_argument("--noisy", type=str, default='no', help="Whethter to inject noise by using data augmentation.")
+parser.add_argument("--ensure_label_consistency", type=str, default='yes', help="Whethter to ensure label consistency as an additional filter.")
 parser.add_argument("--random_sample_size", type=int, help="Random sample size for synthetic data.")
 parser.add_argument("--dataset", type=str, help="Name of the dataset.")
 
@@ -95,9 +102,21 @@ traininingSet = pandas.read_csv(base+'train.tsv', sep='\t')
 testingSet = pandas.read_csv(base+'test.tsv', sep='\t')
 validationSet = pandas.read_csv(base+'dev.tsv', sep='\t')
 
-traininingSet['label'] = traininingSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict))
-testingSet['label'] = testingSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict))
-validationSet['label'] = validationSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict))
+traininingSet['label'] = traininingSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict), axis=1)
+testingSet['label'] = testingSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict), axis=1)
+validationSet['label'] = validationSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict), axis=1)
+
+
+if model_type == 'Sci_BERT':
+	tokenizer = BertTokenizer.from_pretrained('allenai/scibert_scivocab_cased', do_lower_case=False)
+elif model_type == 'Sci_BERT_basevocab':
+	tokenizer = BertTokenizer.from_pretrained('/home/ubuntu/scibert_basevocab_cased', do_lower_case=False)
+elif model_type == 'RoBERTa':
+	tokenizer = RobertaTokenizer.from_pretrained("roberta-base", do_lower_case=False)
+elif model_type == 'xlnet':
+	tokenizer = XLNetTokenizer.from_pretrained('xlnet-base-cased', do_lower_case=False)
+else:
+	tokenizer = BertTokenizer.from_pretrained('bert-base-cased', do_lower_case=False)
 
 create_data_for_pretrained_lms(base, label_to_idx_dict, traininingSet, tokenizer, 'train', model_type)
 create_data_for_pretrained_lms(base, label_to_idx_dict, testingSet, tokenizer, 'test', model_type)
@@ -120,16 +139,7 @@ X_train = np.asarray(X_train)
 X_test = np.asarray(X_test)
 X_valid = np.asarray(X_valid)
 
-if model_type == 'Sci_BERT':
-	tokenizer = BertTokenizer.from_pretrained('allenai/scibert_scivocab_cased', do_lower_case=False)
-elif model_type == 'Sci_BERT_basevocab':
-	tokenizer = BertTokenizer.from_pretrained('/home/ubuntu/scibert_basevocab_cased', do_lower_case=False)
-elif model_type == 'RoBERTa':
-	tokenizer = RobertaTokenizer.from_pretrained("roberta-base", do_lower_case=False)
-elif model_type == 'xlnet':
-	tokenizer = XLNetTokenizer.from_pretrained('xlnet-base-cased', do_lower_case=False)
-else:
-	tokenizer = BertTokenizer.from_pretrained('bert-base-cased', do_lower_case=False)
+
 
 
 for curr_iteration in range(0,max_iteration):
@@ -152,16 +162,16 @@ for curr_iteration in range(0,max_iteration):
 
 	if p.exists(curr_NLI_training_base+'pseudoLabeledSet.tsv') == True:
 		pseudoLabeledSet = pandas.read_csv(curr_NLI_training_base+'pseudoLabeledSet.tsv', sep='\t')
-		pseudoLabeledSet['label'] = pseudoLabeledSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict))
+		pseudoLabeledSet['label'] = pseudoLabeledSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict), axis=1)
 		pseudoLabeledSet = pseudoLabeledSet[['sentence1','sentence2', 'label']]
 		
 
-	if augmentation == True:
+	if augmentation == 'yes':
 		syntheticSet = syntheticSet[['sentence1','sentence2','sentence1_augmented','sentence2_augmented', 'label']]
 	else:
 		syntheticSet = syntheticSet[['sentence1','sentence2', 'label']]
 
-	syntheticSet['label'] = syntheticSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict))
+	syntheticSet['label'] = syntheticSet.apply(lambda x: get_numeric_label(x['label'], label_to_idx_dict), axis=1)
 
 	sampled_syntheticSet, remaining_synthetic_set = sample_balanced_random_set(syntheticSet, random_sample_size)
 	
@@ -191,7 +201,7 @@ for curr_iteration in range(0,max_iteration):
 
 	remaining_synthetic_set = [remaining_synthetic_set]
 
-	if ensure_label_consistency == True:
+	if ensure_label_consistency == 'yes':
 		not_matched = sampled_syntheticSet.loc[~(sampled_syntheticSet['label'] == sampled_syntheticSet['predicted'])]
 		sampled_syntheticSet = sampled_syntheticSet.loc[sampled_syntheticSet['label'] == sampled_syntheticSet['predicted']]
 		remaining_synthetic_set.append(not_matched)
@@ -208,7 +218,7 @@ for curr_iteration in range(0,max_iteration):
 	sampled_syntheticSet = sampled_syntheticSet.drop('label', axis=1)
 	sampled_syntheticSet = sampled_syntheticSet.rename(columns={'predicted': 'label'})
 
-	if augmentation == True:
+	if augmentation == 'yes':
 		sampled_syntheticSet = sampled_syntheticSet.drop('sentence1', axis=1)
 		sampled_syntheticSet = sampled_syntheticSet.drop('sentence2', axis=1)
 		sampled_syntheticSet = sampled_syntheticSet.rename(columns={'sentence1_augmented': 'sentence1'})
@@ -257,8 +267,8 @@ for curr_iteration in range(0,max_iteration):
 
 
 	remaining_synthetic_set = pandas.concat(remaining_synthetic_set)
-	pseudoLabeledSet['label'] = pseudoLabeledSet.apply(lambda x: get_textual_label(x['label'], idx_to_label_dict))
-	remaining_synthetic_set['label'] = remaining_synthetic_set.apply(lambda x: get_textual_label(x['label'], idx_to_label_dict))
+	pseudoLabeledSet['label'] = pseudoLabeledSet.apply(lambda x: get_textual_label(x['label'], idx_to_label_dict), axis=1)
+	remaining_synthetic_set['label'] = remaining_synthetic_set.apply(lambda x: get_textual_label(x['label'], idx_to_label_dict), axis=1)
 
 	
 	next_iteration = curr_iteration+1

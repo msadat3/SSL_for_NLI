@@ -1,5 +1,8 @@
+#This script generates the hypotheses given unlabeled premises for a particular class and assigns that label.
+#Example command: python GenerateHypos.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/' --label 'entailment' --checkpoint_save_directory 'checkpoints' --model_type 'BART_large' --input_file_name  'unlabeled_premises.txt' --device 'cuda'
+
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 from Utils import *
 import torch.nn as nn
 import torch
@@ -44,6 +47,8 @@ def generate_hypos(src_texts, model, tokenizer, batch_size, decoding_strategy):
     return translated_texts
 
 
+parser = argparse.ArgumentParser(description='Generate hypotheses using the trained generative models for different classes.')
+
 parser.add_argument("--base", type=str, help="Location of the directory containing the prepared data for all three classes.")
 parser.add_argument("--label", type=str, help="Class label to train the generative model for.")
 parser.add_argument("--checkpoint_save_directory", type=str, help="Name of the directory you want to save the model for.")
@@ -62,9 +67,10 @@ checkpoint_directory_name = args.checkpoint_save_directory
 base = args.base + args.label +'/'
 model_base = base + model_type +'/' +checkpoint_directory_name+'/'
 
-input_file_loc = args.base+'unlabeled_premises.txt'
+input_file_loc = args.base+args.input_file_name
 
 model_loc = model_base +'/last_checkpoint.pt'
+device = args.device
 
 beam_size = 1
 topK=10

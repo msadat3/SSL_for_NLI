@@ -1,8 +1,10 @@
+#This script divides the data according to their classes for training class-wise hypothesis generation models.
+#Example command: python Divide_class_wise_data.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/'
+
 import pandas
 import os
 import os.path as p
 import argparse
-#base = '/home/msadat3/NLI/MNLI/Class_wise_BART_3K_unfiltered/'
 
 parser = argparse.ArgumentParser(description='Divide class-wise data for training generative models.')
 parser.add_argument("--base", type=str, help="Location of a directory containing the train, test and dev files in TSV format")

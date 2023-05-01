@@ -1,3 +1,5 @@
+# This script combines the class-wise synthetic data
+# Example command: python Combine_class_wise_synthetic_data.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/'
 import pandas
 import os
 import os.path as p
@@ -19,7 +21,7 @@ for label in labels:
 	df = pandas.read_csv(base+label+'/synthetic.tsv', sep='\t')
 	synthetic.append(df)
 
-synthetic = pandas.concat([synthetic])
+synthetic = pandas.concat(synthetic)
 synthetic.to_csv(base+'synthetic.tsv', sep='\t')
 
 
