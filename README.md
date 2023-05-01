@@ -25,7 +25,7 @@ As described in our paper, our proposed Semi-supervised Learning (SSL) framwork 
 ### Hypothesis Generation
 
 #### Step 1:
-Create a base directory containing the train, test, dev splits of your low resource NLI dataset in tsv format. In addition, ensure this directory contains a txt file containing the unlabeled premises in a line-by-line format. 
+Create a base directory containing the train, test, dev splits of your low resource NLI dataset in TSV format. In addition, ensure this directory contains a TXT file containing the unlabeled premises in a line-by-line format. 
 
 #### Step 2:
 Use the script named "Divide_class_wise_data.py" to split the data into sub-directories based on the classes.
@@ -101,7 +101,7 @@ python Vanilla_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Vanilla_S
 python Debiased_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Debiased_ST/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'no' --dataset 'MNLI'
 ```
 
-=> VST+N
+=> DBST+N
 ```
 python Debiased_self_training.py --base '/home/msadat3/NLI/MNLI/MNLI_6K/Debiased_ST_noisy/' --model_type 'BERT' --batch_size 32 --num_epochs 10 --device 'cuda' --random_sample_size 4500 --noisy 'yes' --dataset 'MNLI'
 ```
